@@ -29,6 +29,27 @@ async def test_create_company_success():
 
 
 @pytest.mark.asyncio
+async def test_create_company_with_alphanumeric_cnpj_preserves_value():
+    client = AsyncMongoMockClient()
+    db = client["CERTIFY"]
+
+    repo = AuthRepository(db)
+    cnpj = "AB12CD34567818"
+    payload = CompanyUser(
+        razao_social="Empresa Alfanumérica Ltda",
+        cnpj=cnpj,
+        email="alfanumerica@empresa.com",
+        password="SenhaSegura123!",
+    )
+
+    result = await repo.create_company(payload)
+
+    assert result.cnpj == cnpj
+    stored_company = await db.auth_database.find_one({"cnpj": cnpj})
+    assert stored_company["cnpj"] == cnpj
+
+
+@pytest.mark.asyncio
 async def test_create_company_invalid_cnpj():
     client = AsyncMongoMockClient()
     db = client["CERTIFY"]
